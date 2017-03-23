@@ -491,6 +491,11 @@
       </dependency>
       <dependency>
         <groupId>org.wildfly.swarm</groupId>
+        <artifactId>tools-maven</artifactId>
+        <version>2017.4.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.wildfly.swarm</groupId>
         <artifactId>meta-spi</artifactId>
         <version>2017.5.0-SNAPSHOT</version>
       </dependency>
@@ -504,6 +509,11 @@
         <groupId>org.wildfly.swarm</groupId>
         <artifactId>spi</artifactId>
         <version>2017.5.0-SNAPSHOT</version>
+      </dependency>
+      <dependency>
+        <groupId>org.wildfly.swarm</groupId>
+        <artifactId>container-spi</artifactId>
+        <version>2017.4.0-SNAPSHOT</version>
       </dependency>
 
       <dependency>
@@ -1276,11 +1286,13 @@
   <modules>
     <module>build-resources</module>
 
-    <module>tools</module>
+    <module>tools/tools</module>
+    <module>tools/tools-maven</module>
 
     <!-- base -->
     <module>core/bootstrap</module>
     <module>core/spi</module>
+    <module>core/container-spi</module>
     <module>core/container</module>
 
     <module>meta/meta-spi</module>

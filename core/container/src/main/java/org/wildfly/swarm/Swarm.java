@@ -82,6 +82,7 @@ import org.wildfly.swarm.spi.api.SocketBinding;
 import org.wildfly.swarm.spi.api.StageConfig;
 import org.wildfly.swarm.spi.api.SwarmProperties;
 import org.wildfly.swarm.spi.api.config.ConfigView;
+import org.wildfly.swarm.spi.container.BuildToolFactory;
 
 /**
  * Default {@code main(...)} if an application does not provide one.
@@ -189,6 +190,11 @@ public class Swarm {
     }
 
     public Swarm(boolean debugBootstrap, Properties properties, Map<String, String> environment, String... args) throws Exception {
+        if (!Boolean.getBoolean(BootstrapProperties.IS_UBERJAR)) {
+            // We're not inside an uber jar, need to construct one
+            constructUberJar();
+        }
+
         if (System.getProperty(BOOT_MODULE_PROPERTY) == null) {
             System.setProperty(BOOT_MODULE_PROPERTY, BootModuleLoader.class.getName());
         }
@@ -472,6 +478,10 @@ public class Swarm {
         }
 
         return this.server.deployer().createDefaultDeployment();
+    }
+
+    private void constructUberJar() throws Exception {
+        BuildToolFactory.getBuilder().build("dynamic-uber", Paths.get(System.getProperty("user.dir")));
     }
 
     private void createShrinkWrapDomain() {

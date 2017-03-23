@@ -17,31 +17,23 @@ package org.wildfly.swarm.plugin.maven;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.plexus.PlexusContainer;
 import org.eclipse.aether.DefaultRepositorySystemSession;
-import org.eclipse.aether.RepositorySystem;
-import org.eclipse.aether.impl.ArtifactResolver;
 import org.wildfly.swarm.fractions.PropertiesUtil;
-import org.wildfly.swarm.tools.ArtifactSpec;
 import org.wildfly.swarm.tools.BuildTool;
-import org.wildfly.swarm.tools.DeclaredDependencies;
+import org.wildfly.swarm.tools.maven.MavenArtifactResolvingHelper;
+import org.wildfly.swarm.tools.maven.MavenHelper;
 
 /**
  * @author Bob McWhirter
@@ -53,9 +45,6 @@ public abstract class AbstractSwarmMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${repositorySystemSession}", readonly = true)
     protected DefaultRepositorySystemSession repositorySystemSession;
-
-    @Parameter(alias = "remoteRepositories", defaultValue = "${project.remoteArtifactRepositories}", readonly = true)
-    protected List<ArtifactRepository> remoteRepositories;
 
     @Parameter(defaultValue = "${project.build.directory}")
     protected String projectBuildDir;
@@ -88,10 +77,9 @@ public abstract class AbstractSwarmMojo extends AbstractMojo {
     protected BuildTool.FractionDetectionMode fractionDetectMode;
 
     @Inject
-    protected ArtifactResolver resolver;
+    protected PlexusContainer plexusContainer;
 
-    @Component
-    protected RepositorySystem repositorySystem;
+    private MavenHelper mavenHelper;
 
     AbstractSwarmMojo() {
         if (this.additionalModules.isEmpty()) {
@@ -128,74 +116,20 @@ public abstract class AbstractSwarmMojo extends AbstractMojo {
         }
     }
 
-    protected MavenArtifactResolvingHelper mavenArtifactResolvingHelper() {
-        MavenArtifactResolvingHelper resolvingHelper =
-                new MavenArtifactResolvingHelper(this.resolver,
-                                                 this.repositorySystem,
-                                                 this.repositorySystemSession,
-                                                 this.project.getDependencyManagement());
-        this.remoteRepositories.forEach(resolvingHelper::remoteRepository);
-
-        return resolvingHelper;
+    MavenArtifactResolvingHelper mavenArtifactResolvingHelper() throws MojoExecutionException {
+        return new MavenArtifactResolvingHelper(mavenHelper());
     }
 
-    protected ArtifactSpec artifactToArtifactSpec(Artifact dep) {
-        return new ArtifactSpec(dep.getScope(),
-                                dep.getGroupId(),
-                                dep.getArtifactId(),
-                                dep.getBaseVersion(),
-                                dep.getType(),
-                                dep.getClassifier(),
-                                dep.getFile());
-    }
-
-    protected Map<ArtifactSpec, Set<ArtifactSpec>> createBuckets(Set<Artifact> transientDeps, List<Dependency> directDeps) {
-        Map<ArtifactSpec, Set<ArtifactSpec>> buckets = new HashMap<>();
-        for (Artifact dep : transientDeps) {
-            if (dep.getDependencyTrail().isEmpty()) {
-                throw new RuntimeException("Empty trail " + asBucketKey(dep));
-            } else if (dep.getDependencyTrail().size() == 2) {
-                ArtifactSpec key = asBucketKey(dep);
-                //System.out.println("Appears to be top level: "+ key);
-                if (!buckets.containsKey(key)) {
-                    buckets.put(key, new HashSet<>());
-                }
-            } else {
-
-                String owner = dep.getDependencyTrail().get(1);
-                String ownerScope = null;
-                String[] tokens = owner.split(":");
-                for (Dependency d : directDeps) {
-                    if (d.getGroupId().equals(tokens[0])
-                            && d.getArtifactId().equals(tokens[1])) {
-                        ownerScope = d.getScope();
-                        break;
-                    }
-                }
-
-                assert ownerScope != null : "Failed to resolve owner scope";
-
-                ArtifactSpec parent = DeclaredDependencies.createSpec(owner, ownerScope);
-                if (!buckets.containsKey(parent)) {
-                    buckets.put(parent, new HashSet<>());
-                }
-                buckets.get(parent).add(asBucketKey(dep));
+    protected MavenHelper mavenHelper() throws MojoExecutionException {
+        if (mavenHelper == null) {
+            try {
+                mavenHelper = new MavenHelper().setupContainer(plexusContainer, mavenSession.getSettings());
+            } catch (Exception e) {
+                throw new MojoExecutionException("Failed to setup MavenHelper", e);
             }
         }
-        return buckets;
-    }
 
-    private static ArtifactSpec asBucketKey(Artifact artifact) {
-
-        return new ArtifactSpec(
-                artifact.getScope(),
-                artifact.getGroupId(),
-                artifact.getArtifactId(),
-                artifact.getBaseVersion(),
-                artifact.getType(),
-                artifact.getClassifier(),
-                artifact.getFile()
-        );
+        return mavenHelper;
     }
 
 }

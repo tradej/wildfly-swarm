@@ -17,33 +17,25 @@ package org.wildfly.swarm.plugin.maven;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.eclipse.aether.repository.RemoteRepository;
-import org.wildfly.swarm.bootstrap.util.BootstrapProperties;
 import org.wildfly.swarm.fractions.FractionDescriptor;
 import org.wildfly.swarm.fractions.FractionList;
-import org.wildfly.swarm.fractions.FractionUsageAnalyzer;
 import org.wildfly.swarm.spi.api.SwarmProperties;
 import org.wildfly.swarm.tools.ArtifactSpec;
-import org.wildfly.swarm.tools.BuildTool;
-import org.wildfly.swarm.tools.DeclaredDependencies;
 import org.wildfly.swarm.tools.DependencyManager;
 import org.wildfly.swarm.tools.exec.SwarmExecutor;
 import org.wildfly.swarm.tools.exec.SwarmProcess;
@@ -88,12 +80,12 @@ public class StartMojo extends AbstractSwarmMojo {
 
         final SwarmExecutor executor;
 
+        final String packaging = this.project.getPackaging();
+
         if (this.useUberJar) {
             executor = uberJarExecutor();
-        } else if (this.project.getPackaging().equals("war")) {
-            executor = warExecutor();
-        } else if (this.project.getPackaging().equals("jar")) {
-            executor = jarExecutor();
+        } else if (packaging.equals("war") || packaging.equals("jar")) {
+            executor = bareExecutor();
         } else {
             throw new MojoExecutionException("Unsupported packaging: " + this.project.getPackaging());
         }
@@ -189,34 +181,9 @@ public class StartMojo extends AbstractSwarmMojo {
                 .withExecutableJar(Paths.get(this.projectBuildDir, finalName + "-swarm.jar"));
     }
 
-    protected SwarmExecutor warExecutor() throws MojoFailureException {
-        getLog().info("Starting .war");
-
-        String finalName = this.project.getBuild().getFinalName();
-        if (!finalName.endsWith(".war")) {
-            finalName = finalName + ".war";
-        }
-
-        return executor(Paths.get(this.projectBuildDir, finalName), finalName, false);
-    }
-
-
-    protected SwarmExecutor jarExecutor() throws MojoFailureException {
-        getLog().info("Starting .jar");
-
-        final String finalName = this.project.getBuild().getFinalName();
-
-        return executor(Paths.get(this.project.getBuild().getOutputDirectory()),
-                        finalName.endsWith(".jar") ? finalName : finalName + ".jar",
-                        true);
-    }
-
-    protected SwarmExecutor executor(final Path appPath, final String name,
-                                     final boolean scanDependencies) throws MojoFailureException {
+    protected SwarmExecutor bareExecutor() throws MojoFailureException {
         final SwarmExecutor executor = new SwarmExecutor()
-                .withModules(expandModules())
-                .withProperty(BootstrapProperties.APP_NAME, name)
-                .withClassPathEntries(dependencies(appPath, scanDependencies));
+                .withClassPathEntries(dependencies());
 
         if (this.mainClass != null) {
             executor.withMainClass(this.mainClass);
@@ -227,137 +194,32 @@ public class StartMojo extends AbstractSwarmMojo {
         return executor;
     }
 
-    List<Path> findNeededFractions(final Set<Artifact> existingDeps,
-                                   final Path source,
-                                   final boolean scanDeps) throws MojoFailureException {
-        getLog().info("Scanning for needed WildFly Swarm fractions with mode: " + fractionDetectMode);
+    private List<Path> dependencies() throws MojoFailureException {
+        final List<Path> elements =
+                this.project.getDependencyArtifacts()
+                        .stream()
+                        .filter(a -> !a.getScope().equals("test"))
+                        .filter(a -> a.getGroupId().equals(DependencyManager.WILDFLY_SWARM_GROUP_ID))
+                        .map(a -> a.getFile().toPath())
+                        .collect(Collectors.toList());
 
-        final Set<String> existingDepGASet = existingDeps.stream()
-                .map(d -> String.format("%s:%s", d.getGroupId(), d.getArtifactId()))
-                .collect(Collectors.toSet());
+        // Explicitly add `container` to ensure it and its dependencies are on classpath
+        FractionDescriptor containerDescriptor = FractionList.get()
+                .getFractionDescriptor(DependencyManager.WILDFLY_SWARM_GROUP_ID, "container");
 
-        final Set<FractionDescriptor> fractions;
-        final FractionUsageAnalyzer analyzer = new FractionUsageAnalyzer(FractionList.get()).source(source);
-        if (scanDeps) {
-            existingDeps.forEach(d -> analyzer.source(d.getFile()));
-        }
-        final Predicate<FractionDescriptor> notExistingDep =
-                d -> !existingDepGASet.contains(String.format("%s:%s", d.getGroupId(), d.getArtifactId()));
         try {
-            fractions = analyzer.detectNeededFractions().stream()
-                    .filter(notExistingDep)
-                    .collect(Collectors.toSet());
-        } catch (IOException e) {
-            throw new MojoFailureException("failed to scan for fractions", e);
-        }
-
-        getLog().info("Detected fractions: " + String.join(", ", fractions.stream()
-                .map(FractionDescriptor::av)
-                .sorted()
-                .collect(Collectors.toList())));
-
-        fractions.addAll(this.additionalFractions.stream()
-                                 .map(f -> FractionDescriptor.fromGav(FractionList.get(), f))
-                                 .collect(Collectors.toSet()));
-
-        final Set<FractionDescriptor> allFractions = new HashSet<>(fractions);
-        allFractions.addAll(fractions.stream()
-                                    .flatMap(f -> f.getDependencies().stream())
-                                    .filter(notExistingDep)
-                                    .collect(Collectors.toSet()));
-
-
-        getLog().info("Using fractions: " +
-                              String.join(", ", allFractions.stream()
-                                      .map(FractionDescriptor::gavOrAv)
-                                      .sorted()
-                                      .collect(Collectors.toList())));
-
-        final Set<ArtifactSpec> specs = new HashSet<>();
-        specs.addAll(existingDeps.stream()
-                             .map(this::artifactToArtifactSpec)
-                             .collect(Collectors.toList()));
-        specs.addAll(allFractions.stream()
-                             .map(ArtifactSpec::fromFractionDescriptor)
-                             .collect(Collectors.toList()));
-        try {
-            return mavenArtifactResolvingHelper().resolveAll(specs).stream()
-                    .map(s -> s.file.toPath())
-                    .collect(Collectors.toList());
+            elements.addAll(mavenArtifactResolvingHelper()
+                                    .resolveAll(Collections.singletonList(ArtifactSpec.fromFractionDescriptor(containerDescriptor)))
+                                    .stream()
+                                    .map(s -> s.file.toPath())
+                                    .collect(Collectors.toList()));
         } catch (Exception e) {
             throw new MojoFailureException("failed to resolve fraction dependencies", e);
         }
-    }
 
-    List<Path> dependencies(final Path archiveContent,
-                            final boolean scanDependencies) throws MojoFailureException {
-        final List<Path> elements = new ArrayList<>();
-        final Set<Artifact> artifacts = this.project.getArtifacts();
-        boolean hasSwarmDeps = false;
-
-        final DeclaredDependencies declaredDependencies = new DeclaredDependencies();
-
-        for (Artifact each : artifacts) {
-
-            String parentDep = each.getDependencyTrail().get(1);
-
-            declaredDependencies.add(DeclaredDependencies.createSpec(parentDep), DeclaredDependencies.createSpec(each.toString()));
-
-            if (each.getGroupId().equals(DependencyManager.WILDFLY_SWARM_GROUP_ID)
-                    && each.getArtifactId().equals(DependencyManager.WILDFLY_SWARM_BOOTSTRAP_ARTIFACT_ID)) {
-                hasSwarmDeps = true;
-            }
-            if (each.getGroupId().equals("org.jboss.logmanager")
-                    && each.getArtifactId().equals("jboss-logmanager")) {
-                continue;
-            }
-            if (each.getScope().equals("provided")) {
-                continue;
-            }
-            elements.add(each.getFile().toPath());
-        }
-
-        if (declaredDependencies.getDirectDeps().size() > 0) {
-            try {
-
-                // multi-start doesn't have a projectBuildDir
-
-                File tmp = this.projectBuildDir != null ?
-                        Files.createTempFile(Paths.get(this.projectBuildDir), "swarm-", "-cp.txt").toFile() :
-                        Files.createTempFile("swarm-", "-cp.txt").toFile();
-
-                tmp.deleteOnExit();
-                declaredDependencies.writeTo(tmp);
-                getLog().debug("dependency info stored at: " + tmp.getAbsolutePath());
-                this.properties.setProperty("swarm.cp.info", tmp.getAbsolutePath());
-
-            } catch (IOException e) {
-                throw new RuntimeException(e.getMessage());
-            }
-        }
-
-        elements.add(Paths.get(this.project.getBuild().getOutputDirectory()));
-
-        if (fractionDetectMode != BuildTool.FractionDetectionMode.never) {
-            if (fractionDetectMode == BuildTool.FractionDetectionMode.force ||
-                    !hasSwarmDeps) {
-                List<Path> fractionDeps = findNeededFractions(artifacts, archiveContent, scanDependencies);
-                for (Path p : fractionDeps) {
-                    if (!elements.contains(p)) {
-                        elements.add(p);
-                    }
-                }
-            }
-        } else if (!hasSwarmDeps) {
-            getLog().warn("No WildFly Swarm dependencies found and fraction detection disabled");
-        }
+        // Add Project root to classpath
+        elements.add(Paths.get(this.project.getBuild().getDirectory()));
 
         return elements;
-    }
-
-    List<Path> expandModules() {
-        return this.additionalModules.stream()
-                .map(m -> Paths.get(this.project.getBuild().getOutputDirectory(), m))
-                .collect(Collectors.toList());
     }
 }
