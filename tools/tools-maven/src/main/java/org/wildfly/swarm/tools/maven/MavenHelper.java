@@ -3,6 +3,7 @@ package org.wildfly.swarm.tools.maven;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.repository.ArtifactRepository;
@@ -27,7 +28,15 @@ import org.eclipse.aether.collection.CollectRequest;
 import org.eclipse.aether.collection.CollectResult;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
+import org.eclipse.aether.impl.ArtifactResolver;
+import org.eclipse.aether.repository.Authentication;
+import org.eclipse.aether.repository.LocalArtifactRequest;
+import org.eclipse.aether.repository.LocalArtifactResult;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.RepositoryPolicy;
+import org.eclipse.aether.resolution.ArtifactRequest;
+import org.eclipse.aether.resolution.ArtifactResolutionException;
+import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jboss.shrinkwrap.resolver.impl.maven.bootstrap.MavenSettingsBuilder;
 import org.wildfly.swarm.tools.ArtifactSpec;
@@ -44,10 +53,9 @@ public class MavenHelper {
 
         ContainerConfiguration config = setupContainerConfiguration();
         container = new DefaultPlexusContainer(config);
-
         mavenSettings = new MavenSettingsBuilder().buildDefaultSettings();
 
-        setupCommonRequest();
+        commonSetup();
 
         return this;
     }
@@ -55,11 +63,23 @@ public class MavenHelper {
     public MavenHelper setupContainer(PlexusContainer container, Settings settings) throws Exception {
         this.container = container;
         this.mavenSettings = settings;
-        setupCommonRequest();
+
+        commonSetup();
+
         return this;
     }
 
-    public List<DependencyNode> collectTransitiveDependencies(Collection<ArtifactSpec> specs) throws Exception {
+    private void commonSetup() throws Exception {
+        setupCommonRequest();
+
+        repositorySystemSession = MavenRepositorySystemUtils.newSession();
+        repositorySystem = lookup(org.eclipse.aether.RepositorySystem.class);
+        artifactResolver = lookup(ArtifactResolver.class);
+
+        jbossRepository = buildRemoteRepository("jboss-public-repository-group", "https://repository.jboss.org/nexus/content/groups/public/");
+    }
+
+    public List<Dependency> collectTransitiveDependencies(Collection<ArtifactSpec> specs) throws Exception {
         CollectRequest collect = new CollectRequest();
         collect.setRootArtifact(RepositoryUtils.toArtifact(projectHelper.project().getArtifact()));
         collect.setRequestContext("project");
@@ -72,51 +92,104 @@ public class MavenHelper {
             }
         }
 
-        specs.forEach(spec -> collect
-                .addDependency(new Dependency(new DefaultArtifact(spec.groupId(),
-                                                                  spec.artifactId(),
-                                                                  spec.classifier(),
-                                                                  spec.type(),
-                                                                  spec.version()),
-                                              spec.scope)));
+        specs.forEach(spec ->
+                              collect.addDependency(new Dependency(new DefaultArtifact(spec.groupId(),
+                                                                                       spec.artifactId(),
+                                                                                       spec.classifier(),
+                                                                                       spec.type(),
+                                                                                       spec.version()),
+                                                                   spec.scope)));
 
-        CollectResult result = repositorySystem().collectDependencies(repositorySystemSession, collect);
+        CollectResult result = repositorySystem.collectDependencies(repositorySystemSession, collect);
         PreorderNodeListGenerator gen = new PreorderNodeListGenerator();
         result.getRoot().accept(gen);
 
-        return gen.getNodes();
+        return gen.getNodes().stream().map(DependencyNode::getDependency).collect(Collectors.toList());
     }
 
-    MavenHelper setResolvingHelper(MavenArtifactResolvingHelper helper) {
-        this.resolvingHelper = helper;
-        return this;
+    public ArtifactSpec resolveArtifact(ArtifactSpec spec) {
+        final DefaultArtifact artifact = new DefaultArtifact(spec.groupId(), spec.artifactId(), spec.classifier(),
+                                                             spec.type(), spec.version());
+
+        final LocalArtifactResult localResult = repositorySystemSession.getLocalRepositoryManager()
+                .find(repositorySystemSession, new LocalArtifactRequest(artifact, projectHelper.project().getRemoteProjectRepositories(), null));
+        if (localResult.isAvailable()) {
+            spec.file = localResult.getFile();
+            return spec;
+        } else {
+            try {
+                final ArtifactResult result = artifactResolver.resolveArtifact(repositorySystemSession,
+                                                                               new ArtifactRequest(artifact,
+                                                                                                   projectHelper.project().getRemoteProjectRepositories(),
+                                                                                                   null));
+                if (result.isResolved()) {
+                    spec.file = result.getArtifact().getFile();
+                    return spec;
+                }
+            } catch (ArtifactResolutionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * This is needed to speed up things.
+     */
+    public void resolveDependenciesInParallel(List<Dependency> nodes) {
+        List<ArtifactRequest> artifactRequests = nodes.stream()
+                .map(node -> new ArtifactRequest(node.getArtifact(), this.projectHelper.project().getRemoteProjectRepositories(), null))
+                .collect(Collectors.toList());
+
+        try {
+            artifactResolver.resolveArtifacts(this.repositorySystemSession, artifactRequests);
+        } catch (ArtifactResolutionException e) {
+            // ignore, error will be printed by resolve(ArtifactSpec)
+        }
     }
 
     MavenHelper setProjectHelper(MavenProjectHelper helper) {
         this.projectHelper = helper;
+
+        // Setup JBoss Repo remote repo if not present
+        if (this.projectHelper.project().getRemoteProjectRepositories().stream().noneMatch(r -> r.getUrl().equals(jbossRepository.getUrl()))) {
+            this.projectHelper.project().getRemoteProjectRepositories().add(jbossRepository);
+        }
+
         return this;
     }
 
-    public RepositorySystemSession repositorySystemSession() throws Exception {
-        if (repositorySystemSession == null) {
-            repositorySystemSession = MavenRepositorySystemUtils.newSession();
-        }
+    public RemoteRepository buildRemoteRepository(String id, String url) {
+        RemoteRepository.Builder builder = new RemoteRepository.Builder(id, "default", url);
 
-        return repositorySystemSession;
+        RepositoryPolicy policy = new RepositoryPolicy();
+        builder.setReleasePolicy(policy);
+        builder.setSnapshotPolicy(policy);
+
+        RemoteRepository tempRepo = builder.build();
+
+        builder = new RemoteRepository.Builder(tempRepo);
+
+        // Handle authentication
+        Authentication auth = repositorySystemSession.getAuthenticationSelector().getAuthentication(tempRepo);
+        builder.setAuthentication(auth);
+
+        // Handle mirror
+        RemoteRepository.Builder mirrorBuilder = new RemoteRepository.Builder(repositorySystemSession.getMirrorSelector().getMirror(tempRepo));
+        mirrorBuilder.setAuthentication(auth);
+        builder.addMirroredRepository(mirrorBuilder.build());
+
+        // Handle proxy
+        builder.setProxy(repositorySystemSession.getProxySelector().getProxy(tempRepo));
+
+        return builder.build();
     }
 
-    public org.eclipse.aether.RepositorySystem repositorySystem() throws Exception {
-        if (repositorySystem == null) {
-            repositorySystem = lookup(org.eclipse.aether.RepositorySystem.class);
-        }
-
-        return repositorySystem;
-    }
-
-    public ProjectBuildingRequest newProjectBuildingRequest() throws Exception {
+    public ProjectBuildingRequest newProjectBuildingRequest() {
         DefaultProjectBuildingRequest projectBuildingRequest = new DefaultProjectBuildingRequest();
         projectBuildingRequest.setLocalRepository(commonRequest.getLocalRepository());
-        projectBuildingRequest.setRepositorySession(repositorySystemSession());
+        projectBuildingRequest.setRepositorySession(repositorySystemSession);
         projectBuildingRequest.setSystemProperties(commonRequest.getSystemProperties());
         projectBuildingRequest.setUserProperties(commonRequest.getUserProperties());
         projectBuildingRequest.setRemoteRepositories(commonRequest.getRemoteRepositories());
@@ -158,8 +231,6 @@ public class MavenHelper {
         commonRequest.setLocalRepository(localRepository());
         commonRequest.setLocalRepositoryPath(commonRequest.getLocalRepository().getBasedir());
         commonRequest.setSystemProperties(System.getProperties());
-
-        RemoteRepository.Builder
     }
 
     private ContainerConfiguration setupContainerConfiguration() throws Exception {
@@ -183,9 +254,9 @@ public class MavenHelper {
 
     private RepositorySystemSession repositorySystemSession;
 
-    private MavenArtifactResolvingHelper resolvingHelper;
-
     private MavenProjectHelper projectHelper;
 
     private RemoteRepository jbossRepository;
+
+    private ArtifactResolver artifactResolver;
 }
