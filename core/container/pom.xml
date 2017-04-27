@@ -158,7 +158,6 @@
       <version>${version.weld-se}</version>
       <scope>provided</scope>
     </dependency>
-
     <dependency>
       <groupId>org.wildfly.core</groupId>
       <artifactId>wildfly-server</artifactId>

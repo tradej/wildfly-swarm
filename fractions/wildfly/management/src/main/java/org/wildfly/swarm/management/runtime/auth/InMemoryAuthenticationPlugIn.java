@@ -44,11 +44,14 @@ public class InMemoryAuthenticationPlugIn implements AuthenticationPlugIn<Creden
     @Override
     public Identity<Credential> loadIdentity(String userName, String realm) throws IOException {
 
+        System.err.println("load identity: " + userName + " in " + realm);
+
         if (!this.credentials.containsKey(userName)) {
             return null;
         }
 
         String hash = this.credentials.get(userName);
+        System.err.println("return identity for " + hash);
         return new Identity<Credential>() {
             @Override
             public String getUserName() {
@@ -57,7 +60,9 @@ public class InMemoryAuthenticationPlugIn implements AuthenticationPlugIn<Creden
 
             @Override
             public Credential getCredential() {
+                System.err.println("getCredential for " + userName);
                 return new DigestCredential(hash);
+                //return new PasswordCredential(hash.toCharArray());
             }
         };
     }

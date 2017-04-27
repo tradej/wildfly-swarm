@@ -41,6 +41,23 @@
       <artifactId>wildfly-controller-client</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.wildfly.security</groupId>
+      <artifactId>wildfly-elytron</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.xnio</groupId>
+      <artifactId>xnio-api</artifactId>
+      <version>3.5.0.Beta5</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jboss.xnio</groupId>
+      <artifactId>xnio-nio</artifactId>
+      <version>3.5.0.Beta5</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
 </project>

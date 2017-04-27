@@ -1,6 +1,5 @@
 package org.wildfly.swarm.datasources.runtime.drivers;
 
-import org.jboss.modules.ModuleIdentifier;
 import org.wildfly.swarm.config.datasources.DataSource;
 import org.wildfly.swarm.datasources.runtime.DriverInfo;
 
@@ -18,7 +17,7 @@ public class PrestoDBDriverInfo extends DriverInfo {
     public static final String DEFAULT_PASSWORD = "sa";
 
     protected PrestoDBDriverInfo() {
-        super("prestodb", ModuleIdentifier.create("com.facebook.presto.jdbc"), "com.facebook.presto.jdbc.PrestoDriver");
+        super("prestodb", "com.facebook.presto.jdbc", "com.facebook.presto.jdbc.PrestoDriver");
     }
 
     @Override

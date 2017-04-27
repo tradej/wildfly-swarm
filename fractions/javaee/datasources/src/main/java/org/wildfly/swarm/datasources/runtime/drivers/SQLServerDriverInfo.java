@@ -17,7 +17,6 @@ package org.wildfly.swarm.datasources.runtime.drivers;
 
 import javax.enterprise.context.ApplicationScoped;
 
-import org.jboss.modules.ModuleIdentifier;
 import org.wildfly.swarm.config.datasources.DataSource;
 import org.wildfly.swarm.config.datasources.JDBCDriver;
 import org.wildfly.swarm.datasources.runtime.DriverInfo;
@@ -36,7 +35,7 @@ public class SQLServerDriverInfo extends DriverInfo {
     public static final String DEFAULT_PASSWORD = "admin";
 
     public SQLServerDriverInfo() {
-        super("sqlserver", ModuleIdentifier.create("com.microsoft"), "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        super("sqlserver", "com.microsoft", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
     }
 
     @Override

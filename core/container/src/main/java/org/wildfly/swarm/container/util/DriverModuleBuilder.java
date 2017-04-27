@@ -75,8 +75,7 @@ public abstract class DriverModuleBuilder {
             Set<File> optionalJars = findOptionalJars();
 
             optionalJars.add(primaryJar);
-            ModuleIdentifier moduleIdentifier = ModuleIdentifier.create(moduleName);
-            DynamicModuleFinder.register(moduleIdentifier, (id, loader) -> {
+            DynamicModuleFinder.register(moduleName, (id, loader) -> {
                 ModuleSpec.Builder builder = ModuleSpec.build(id);
 
                 for (File eachJar : optionalJars) {
