@@ -1169,9 +1169,13 @@
         <module>testsuite/testsuite-drools-server</module>
         <module>testsuite/testsuite-ejb-remote</module>
         <module>testsuite/testsuite-flyway</module>
+<!--
         <module>testsuite/testsuite-infinispan</module>
+-->
         <module>testsuite/testsuite-javafx</module>
+<!--
         <module>testsuite/testsuite-jdr</module>
+-->
         <module>testsuite/testsuite-jgroups</module>
         <module>testsuite/testsuite-jolokia</module>
         <module>testsuite/testsuite-jolokia-keycloak</module>
