@@ -24,7 +24,7 @@ include::assemblies/assembly_packaging-types.adoc[leveloffset=+1]
 ## Basics
 
 include::howto/writing-an-application-from-scratch/index.adoc[leveloffset=+2]
-include::howto/use-a-bom/index.adoc[leveloffset=+2]
+include::assemblies/assembly_using-a-bom.adoc[leveloffset=+2]
 include::howto/create-an-uberjar/index.adoc[leveloffset=+2]
 ifndef::product[]
 include::howto/create-a-hollow-jar/index.adoc[leveloffset=+2]
