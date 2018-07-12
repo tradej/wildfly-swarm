@@ -19,7 +19,7 @@ In addition to that, put `true` in the `hollow` property of the `<configuration>
 [source,xml]
 ----
 <plugins>
-include::pom.xml[tag=plugin,indent=2]
+include::../resources/pom/hollow-jar/pom.xml[tag=plugin,indent=2]
 </plugins>
 ----
 

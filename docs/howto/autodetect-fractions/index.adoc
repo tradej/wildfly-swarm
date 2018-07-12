@@ -12,7 +12,7 @@ For example, consider your `pom.xml` already specifies the API `.jar` file for a
 [source,xml]
 ----
 <dependencies>
-include::pom.xml[tag=jaxrs,index=2]
+include::../resources/pom/autodetect-fractions/pom.xml[tag=jaxrs,index=2]
 </dependencies>
 ----
 
@@ -32,7 +32,7 @@ include::pom.xml[tag=jaxrs,index=2]
 [source,xml]
 ----
 <plugins>
-include::pom.xml[tag=plugin,indent=2]
+include::../resources/pom/autodetect-fractions/pom.xml[tag=plugin,indent=2]
 </plugins>
 ----
 

@@ -1,5 +1,5 @@
 
-[#enabling-logging_{context}]
+[id='enabling-logging_{context}']
 = Enabling logging
 
 Each {Thorntail} fraction is dependent on the Logging fraction, which means that if you use any {Thorntail} fraction in your application, logging is automatically enabled on the `INFO` level and higher.

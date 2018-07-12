@@ -21,7 +21,7 @@ testing work well with {Thorntail}{ndash}based applications.
 ----
 <dependencyManagement>
   <dependencies>
-include::pom.xml[tag=bom,indent=4]
+include::../resources/pom/testing-in-container/pom.xml[tag=bom,indent=4]
   </dependencies>
 </dependencyManagement>
 ----
@@ -32,7 +32,7 @@ with the `<scope>` set to `test`:
 [source,xml]
 ----
 <dependencies>
-include::pom.xml[tag=arquillian,indent=2]
+include::../resources/pom/testing-in-container/pom.xml[tag=arquillian,indent=2]
 </dependencies>
 ----
 
@@ -43,7 +43,7 @@ Write your application as you normally would; use any default
 +
 [source,yml]
 ----
-include::src/main/resources/project-defaults.yml[]
+include::../resources/yml/testing-in-container/project-defaults.yml[]
 ----
 
 . Create a test class.
@@ -54,7 +54,7 @@ were larger, and the aim was to test a single component in isolation.
 +
 [source,java]
 ----
-include::src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=classdef,indent=0]
+include::../resources/java/testing-in-container/src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=classdef,indent=0]
 ----
 
 . Create a deployment.
@@ -73,7 +73,7 @@ along with the `@RunWith(Arquillian.class)` annotation:
 
 [source,java]
 ----
-include::src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=prolog,indent=0]
+include::../resources/java/testing-in-container/src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=prolog,indent=0]
 ----
 
 Using the `@DefaultDeployment` annotation provided by Arquillian integration
@@ -84,7 +84,7 @@ The `@DefaultDeployment` annotation inspects the package of the test:
 
 [source,java]
 ----
-include::src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=package,indent=0]
+include::../resources/java/testing-in-container/src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=package,indent=0]
 ----
 
 From the package, it uses heuristics to include all of your other application
@@ -111,7 +111,7 @@ running application into an instance member of the test case:
 
 [source,java]
 ----
-include::src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=arquillian-resource,indent=0]
+include::../resources/java/testing-in-container/src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=arquillian-resource,indent=0]
 ----
 
 That means the test method itself can use that `InitialContext` to ensure the
@@ -119,7 +119,7 @@ Datasource you configured using `project-defaults.yml` is live and available:
 
 [source,java]
 ----
-include::src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=test,indent=0]
+include::../resources/java/testing-in-container/src/test/java/org/wildfly/swarm/howto/incontainer/InContainerTest.java[tag=test,indent=0]
 ----
 --
 

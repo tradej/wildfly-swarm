@@ -19,7 +19,7 @@ with {Thorntail} is as an _uberjar_.
 [source,xml]
 ----
 <plugins>
-include::pom.xml[tag=plugin,indent=2]
+include::../resources/pom/uberjar/pom.xml[tag=plugin,indent=2]
 </plugins>
 ----
 

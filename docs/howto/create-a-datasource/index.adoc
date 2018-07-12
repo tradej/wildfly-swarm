@@ -34,6 +34,6 @@ database.
 
 [source,yaml]
 ----
-include::src/main/resources/project-defaults.yml[tag=all]
+include::../resources/yml/jdbc/project-defaults.yml[tag=all]
 ----
 

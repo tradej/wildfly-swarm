@@ -33,7 +33,7 @@ scope) to your application:
 [source,xml]
 ----
 <dependencies>
-include::pom.xml[tag=dependencies,indent=2]
+include::../resources/pom/jdbc/pom.xml[tag=dependencies,indent=2]
 </dependencies>
 ----
 

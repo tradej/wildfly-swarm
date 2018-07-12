@@ -19,7 +19,7 @@ When writing your application from scratch, ensure it compiles correctly and use
 [source,xml]
 ----
 <dependencies>
-include::pom.xml[tag=jaxrs,indent=2]
+include::../resources/pom/explicit-fractions/pom.xml[tag=jaxrs,indent=2]
 </dependencies>
 ----
 

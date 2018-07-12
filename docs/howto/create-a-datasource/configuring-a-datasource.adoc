@@ -20,6 +20,6 @@ using the JDBC driver of your choice. The configuration is stored under `swarm`
 swarm:
   datasources:
     data-sources:
-include::src/main/resources/project-defaults.yml[tag=datasource,indent=6]
+include::../resources/yml/jdbc/project-defaults.yml[tag=datasource,indent=6]
 ----
 

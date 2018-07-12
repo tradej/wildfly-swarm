@@ -87,6 +87,6 @@ Below, you can see the complete logging configuration section:
 .The logging section in a YAML configuration profile
 [source,yaml]
 ----
-include::src/main/resources/profile.yaml[]
+include::../resources/yml/logging/profile.yaml[]
 ----
 
