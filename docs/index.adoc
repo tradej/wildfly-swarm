@@ -14,49 +14,49 @@ v{version}
 
 include::introduction.adoc[]
 
-# Concepts
+= Concepts
 
-include::concepts/fractions.adoc[leveloffset=+1]
+include::modules/fractions.adoc[leveloffset=+1]
 include::assemblies/assembly_packaging-types.adoc[leveloffset=+1]
 
-# HOWTO
+= HOWTO
 
-## Basics
+== Basics
 
-include::howto/writing-an-application-from-scratch/index.adoc[leveloffset=+2]
+include::modules/proc_creating-an-application-from-scratch.adoc[leveloffset=+2]
 include::assemblies/assembly_using-a-bom.adoc[leveloffset=+2]
-include::howto/create-an-uberjar/index.adoc[leveloffset=+2]
+include::modules/proc_creating-an-uberjar.adoc[leveloffset=+2]
 ifndef::product[]
-include::howto/create-a-hollow-jar/index.adoc[leveloffset=+2]
+include::modules/proc_creating-a-hollow-jar.adoc[leveloffset=+2]
 endif::[]
-include::howto/autodetect-fractions/index.adoc[leveloffset=+2]
-include::howto/explicit-fractions/index.adoc[leveloffset=+2]
-include::howto/create-a-datasource/index.adoc[leveloffset=+2]
-include::howto/test-in-container/index.adoc[leveloffset=+2]
+include::modules/proc_autodetecting-fractions.adoc[leveloffset=+2]
+include::modules/proc_using-explicit-fractions.adoc[leveloffset=+2]
+include::modules/proc_creating-a-datasource.adoc[leveloffset=+2]
+include::modules/proc_testing-in-a-container.adoc[leveloffset=+2]
 
-### Logging
+=== Logging
 
-include::howto/enabling-logging/index.adoc[leveloffset=+3]
-include::howto/logging-to-a-file/index.adoc[leveloffset=+3]
+include::modules/proc_enabling-logging.adoc[leveloffset=+3]
+include::modules/proc_logging-to-a-file.adoc[leveloffset=+3]
 
 
 ifndef::product[]
 
-## Advanced
-include::howto/create-a-fraction/index.adoc[leveloffset=+2]
+== Advanced
+include::modules/create-a-fraction/index.adoc[leveloffset=+2]
 
 endif::product[]
 
-# Reference
+= Reference
 
-## General
+== General
 
 include::assemblies/assembly_using-thorntail-maven-plugin.adoc[leveloffset=+2]
 
 include::assemblies/assembly_configuring-a-thorntail-application.adoc[leveloffset=+2]
-include::reference/network.adoc[leveloffset=+2]
-include::reference/usage.adoc[leveloffset=+2]
+include::modules/ref_network-configuration.adoc[leveloffset=+2]
+include::modules/ref_the-usage-txt-file.adoc[leveloffset=+2]
 
-## Fractions
+== Fractions
 
 include::reference/index.adoc[leveloffset=+2]
