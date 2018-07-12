@@ -7,14 +7,14 @@
 To explicitly specify the {Thorntail} fractions your application uses, instead of relying on auto-detection, {Thorntail} includes a set of BOMs (bill of materials) which you can use instead of having to track and update Maven artifact versions in several places.
 
 ifndef::product[]
-include::../reference/ref_thorntail-community-bom-types.adoc[leveloffset=+1]
+include::../modules/ref_thorntail-community-bom-types.adoc[leveloffset=+1]
 endif::[]
 
 ifdef::product[]
-include::../reference/ref_thorntail-product-bom-types.adoc[leveloffset=+1]
+include::../modules/ref_thorntail-product-bom-types.adoc[leveloffset=+1]
 endif::[]
 
-include::../howto/proc_specifying-a-bom-in-your-application.adoc[leveloffset=+1]
+include::../modules/proc_specifying-a-bom-in-your-application.adoc[leveloffset=+1]
 
 :context: {parent-context}
 

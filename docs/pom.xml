@@ -164,7 +164,6 @@
 
   <modules>
     <module>reference</module>
-    <module>howto</module>
   </modules>
 
 </project>

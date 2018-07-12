@@ -1,0 +1,10 @@
+
+= Example YAML configuration with a H2 datasource
+
+Below, you can see an example `project-defaults.yml` file that connect to an H2 database.
+
+[source,yaml]
+----
+include::../resources/yml/jdbc/project-defaults.yml[tag=all]
+----
+
