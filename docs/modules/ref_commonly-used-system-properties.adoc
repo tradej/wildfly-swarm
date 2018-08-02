@@ -1,0 +1,102 @@
+
+[id='commonly-used-system-properties_{context}']
+= Commonly used system properties
+
+Regardless of which {Thorntail} fractions you use in your application, there are certain properties that you are likely to use.
+Below is a non-exhaustive list of the commonly available ones.
+
+For a full list of supported properties, see the following sources:
+
+* The individual fraction configuration options in the xref:fractions[] chapter
+ifndef::product[]
+* The xref:https://github.com/wildfly-swarm-archive/wildfly-swarm-spi/blob/master/src/main/java/org/wildfly/swarm/spi/api/SwarmProperties.java[Javadocs of the `org.wildfly.swarm.spi.api.SwarmProperties`] interface.
+endif::[]
+
+[discrete]
+== General
+
+General properties that are usually available regardless of the fraction used.
+
+[cols="2,4,1",options="header"]
+|===
+| Property
+| Description
+| Default value
+
+| `swarm.bind.address`
+| Interface to bind servers.
+| 0.0.0.0
+
+| `swarm.port.offset`
+| Sets a global port adjustment.
+| 0
+
+| `swarm.deployment.timeout`
+| Timeout to wait for a deployment to occur, in seconds.
+| 300
+
+| `swarm.export.deployment`
+| Causes a deployed artifact to be dumped to disk when {Thorntail} starts, for debugging.
+| false
+
+| `swarm.debug.port`
+| If provided, the swarm process will pause for debugging on the given port.
+This option is only available when running an Arquillian test or when using the `mvn wildfly-swarm:run` goal, not when executing the application using the `java -jar` command.
+Using `java -jar` requires typical Java debug agent parameters.
+| none
+|===
+
+[discrete]
+== Undertow
+
+Properties available when using the Undertow web server.
+
+[cols="1,2",options="header"]
+|===
+| Property
+| Description
+
+| `swarm.http.port`
+| The port for the HTTP server
+
+| `swarm.https.port`
+| The port for the HTTPS server
+
+| `swarm.https.certificate.generate`
+| Enables HTTPS and generates a self-signed certificate.
+
+| `swarm.https.certificate.generate.host`
+| The host used in the self-signed certificate if the `swarm.https.certificate.generate` property is set to `true`
+
+| `swarm.context.path`
+| The context path for the deployed application
+|===
+
+[discrete]
+= Databases
+
+Properties used with the common database fractions, such as H2, MySQL or PostgreSQL.
+
+[cols="2,4,1",options="header"]
+|===
+| Property
+| Description
+| Default value
+
+| `swarm.ds.name`
+| Name of the datasource (e.g. ExampleDS)
+| ExampleDS
+
+| `swarm.ds.username`
+| Username to access the database
+| _Driver specific_
+
+| `swarm.ds.password`
+| Password to access the database
+| _Driver specific_
+
+| `swarm.ds.connection.url`
+| JDBC connection URL
+| _Driver specific_
+|===
+
