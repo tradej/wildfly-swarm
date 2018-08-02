@@ -1,0 +1,17 @@
+
+[id='thorntail-system-requirements_{context}']
+= {Thorntail} system requirements
+
+To run {Thorntail}, you need at least the following sofware installed:
+
+Java Development Kit (JDK) 8:: {Thorntail} uses the Java 8 API, especially lambda and collection enhancements.
+For that reason, you need JDK version 8 or newer.
++
+To download Oracle JDK 8, go to the link:http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html[Oracle JDK Downloads page].
+
+Maven 3.3.x:: The {Thorntail} Maven plugin, which performs most of the packaging procedures, requires Apache Maven version at least 3.3.x.
++
+To download Apache Maven, go to the link:https://maven.apache.org/download.cgi[Maven download page].
++
+When running {Thorntail} from an integrated development environment (IDE), ensure that the IDE uses the necessary version of Maven.
+

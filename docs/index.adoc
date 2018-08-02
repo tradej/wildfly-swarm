@@ -14,6 +14,8 @@ v{version}
 
 include::introduction.adoc[]
 
+include::modules/ref_thorntail-system-requirements.adoc[leveloffset=+1]
+
 # Concepts
 
 include::modules/con_fractions.adoc[leveloffset=+1]
