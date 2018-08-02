@@ -187,7 +187,7 @@ Paths to a directory containing additional module definitions.
 |===
 
 processes::
-Application configurations to start (see xref:maven-plugin-multistart-goal[multistart]).
+Application configurations to start (see the `multistart` goal in xref:thorntail-maven-plugin-goals[]).
 +
 [cols="1,2a"]
 |===
