@@ -30,8 +30,8 @@ Store the output in the `prometheus.yml` file in the directory with your applica
 include::prometheus.yml[tag=thorntail]
 ----
 +
-Prometheus expects metrics to be exposed at the `/metrics` endpoint of your application, which is a requirement of the MicroProfile Metrics specification.
-It is also the default behavior of {Thorntail}-based applications.
+The default behavior of {Thorntail}-based applications is to expose metrics at the `/metrics` endpoint.
+This is what the MicroProfile Metrics specification requires, and also what Prometheus expects.
 --
 
 * The Prometheus server running on `localhost` using Docker:
