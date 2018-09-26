@@ -20,5 +20,6 @@ Outside of the application, Prometheus typically runs.
 .Additional resources
 * The link:https://github.com/eclipse/microprofile-metrics[MicroProfile Metrics GitHub page^].
 * The link:https://prometheus.io/[Prometheus homepage^]
-* A popular solution to visualize metrics stored in Prometheus is Grafana. For more information, see the link:https://grafana.com/[Grafana homepage^].
+* A popular solution to visualize metrics stored in Prometheus is Grafana.
+For more information, see the link:https://grafana.com/[Grafana homepage^].
 

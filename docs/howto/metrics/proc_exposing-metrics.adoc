@@ -2,13 +2,10 @@
 [id='exposing-metrics_{context}']
 = Exposing metrics
 
-Exposing metrics to Prometheus--a monitoring solution--can be done in a configuration file in your {Thorntail}-based application.
-Collect the metrics using annotations in your application source code.
-
 In this example, you:
 
-* Configure your application to collect metrics.
-* View the data using Prometheus.
+* Configure your application to expose metrics.
+* Collect and view the data using Prometheus.
 
 Note that Prometheus actively connects to a monitored application to collect data; the application does not actively send metrics to a server.
 
@@ -62,7 +59,7 @@ include::pom.xml[tag=mp-metrics,indent=2]
 </dependencies>
 ----
 
-. Annotate methods or classes with the metrics annotations that you want, for example:
+. Annotate methods or classes with the metrics annotations, for example:
 +
 --
 [source,java]
